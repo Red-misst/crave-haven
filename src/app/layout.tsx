@@ -3,10 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 // COMPONENTS
-import StoreWrapper from "../_components/food-e/layout/store";
-import Navbar from "../_components/food-e/layout/navbar";
-import Header from "../_components/food-e/layout/header";
-
+import StoreWrapper from "@/app/_components/layout/store";
+import Navbar from "@/app/_components/layout/navbar";
+import Header from "@/app/_components/layout/header";
+import Providers from "@/app/_components/providers/sessionProvider";
 // -------------
 
 const geistSans = Geist({
@@ -34,11 +34,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiasedmin-h-screen max-w-6xl mx-auto pt-4 px-2`}
       >
+        <Providers>
         <StoreWrapper>
                 <Navbar />
                 <Header />
                 {children}
             </StoreWrapper>
+            </Providers>
       </body>
     </html>
   );
