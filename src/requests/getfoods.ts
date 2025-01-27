@@ -34,7 +34,6 @@ export const fetchFoods = async (): Promise<ApiResponseType> => {
     }
 
     const data = await response.json();
-    console.log("data", data)
     // Validate response structure
     if (!data.foods || !Array.isArray(data.foods)) {
       throw new Error('Invalid API response structure');
