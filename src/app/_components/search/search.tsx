@@ -1,23 +1,23 @@
-'use client';
-import { useEffect, useRef, useState } from "react";
+"use client";
+import React, { useState, useEffect, useRef } from "react";
 import { FiSearch } from "react-icons/fi";
-import Image from "next/image";
-import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchFoods } from "@/requests/getfoods";
-import { FoodType } from "@/types/food";// Make sure to import your FoodItem type
-
-type FuseResult = {
-  item: FoodType;
-};
+import { FoodType } from "@/types/food";
+import { selectItems } from "@/utils/cartslice";
+import ProductCard from "./productCard"; // Import ProductCard component
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<FuseResult[]>([]);
+  const [searchResults, setSearchResults] = useState<FoodType[]>([]);
   const [foods, setFoods] = useState<FoodType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [fade, setFade] = useState<boolean>(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const dispatch = useDispatch();
+  const cartItems = useSelector(selectItems); // Get cart items from Redux
 
   const options = {
     keys: ["name", "description", "category"],
@@ -32,7 +32,7 @@ const Search = () => {
         if (error) throw new Error(error);
         setFoods(fetchedFoods);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load foods');
+        setError(err instanceof Error ? err.message : "Failed to load foods");
       } finally {
         setLoading(false);
       }
@@ -41,13 +41,14 @@ const Search = () => {
     loadFoods();
   }, []);
 
+  // Close search function
   const closeSearch = (): void => {
     setSearchTerm("");
     setSearchResults([]);
     setFade(false);
   };
 
-  // Click outside handler
+  // Handle clicks outside the component
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent): void => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -56,9 +57,18 @@ const Search = () => {
     };
 
     window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
   }, []);
 
+  // Prevent closing search when clicking inside the results
+  const handleResultClick = (e: React.MouseEvent): void => {
+    e.stopPropagation(); // Prevent the click from propagating to the window click listener
+  };
+
+  // Search food function
   const searchFood = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -73,24 +83,20 @@ const Search = () => {
       setLoading(true);
       const Fuse = (await import("fuse.js")).default;
       const fuse = new Fuse(foods, options);
-      setSearchResults(fuse.search(term));
+      setSearchResults(fuse.search(term).map((result) => result.item)); // Only keep the item object
     } catch (err) {
-      setError('Search failed');
+      setError("Search failed");
     } finally {
       setLoading(false);
     }
   };
 
   if (error) {
-    return (
-      <div className="text-red-500 text-sm p-2">
-        Error: {error}
-      </div>
-    );
+    return <div className="text-red-500 text-sm p-2">Error: {error}</div>;
   }
 
   return (
-    <div className="relative flex rounded-md items-center " ref={searchRef}>
+    <div className="relative flex rounded-md items-center" ref={searchRef}>
       <div className="absolute inset-y-0 left-2.5 flex items-center">
         <FiSearch className="w-4 text-gray-600" />
       </div>
@@ -109,31 +115,9 @@ const Search = () => {
           {loading ? (
             <p className="text-xs text-gray-500 text-center py-4">Loading...</p>
           ) : searchResults.length > 0 ? (
-            searchResults.map(({ item: { slug, name, image } }, i) => (
-              <div
-                key={`search-result-${slug}-${i}`}
-                className={`transition-opacity duration-300 ${fade ? "opacity-100" : "opacity-0"}`}
-              >
-                <Link href={`/productDetails/${slug}`} passHref>
-                  <div
-                    onClick={closeSearch}
-                    className={`flex cursor-pointer items-center justify-between lg:px-5 py-2 px-4 ${i !== searchResults.length - 1 ? "border-b border-gray-200" : ""
-                      } bg-gray-50 hover:bg-gray-100`}
-                  >
-                    <h5 className="text-sm text-gray-700 pr-4 capitalize">{name}</h5>
-                    <div className="min-w-max">
-                      <Image
-                        src={image}
-                        height={50}
-                        width={80}
-                        alt={name}
-                        className="rounded-lg"
-                        style={{ objectFit: 'contain' }}
-                        priority={i < 3}
-                      />
-                    </div>
-                  </div>
-                </Link>
+            searchResults.map((food) => (
+              <div key={food.slug} onClick={handleResultClick}>
+                <ProductCard {...food} /> {/* Use the ProductCard component */}
               </div>
             ))
           ) : (

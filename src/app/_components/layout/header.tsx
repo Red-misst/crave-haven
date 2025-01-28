@@ -41,17 +41,20 @@ function Header() {
             </div>
 
             {/* Desktop Header */}
-            <header className="sticky top-0 inset-x-0 text-gray-900 dark:text-white glassmorphism px-1 hidden sm:flex z-10">
+            <header className="sticky top-0 inset-x-0 text-gray-900 dark:text-white glassmorphism px-1 hidden sm:flex z-20">
                 <div className="flex items-center w-full max-w-screen-xl py-2 xl:space-x-16 lg:space-x-12 space-x-7 mx-auto">
                     <div className="flex items-center">
                         <Link href="/food-e">
-                            <Image
+                        <h1>
+                            Crave haven
+                            </h1>
+                            {/* <Image
                                 src="/images/food-e.png"
                                 alt="food-e logo"
                                 className="cursor-pointer rounded-full border-2 border-gray-300 dark:border-gray-700 shadow-lg"
                                 width={50}
                                 height={50}
-                            />
+                            /> */}
                         </Link>
                     </div>
                     <div className="flex-grow">
@@ -67,11 +70,11 @@ function Header() {
                         onClick={() => router.push("/cart")}
                     >
                         <FaShoppingCart className="xl:w-10 lg:w-9 w-8 link" />
-                        {items.length > 0 && (
-                            <div className="absolute -top-2 -right-1 rounded-full text-white bg-indigo-500 p-1 flex items-center justify-center text-xs font-extrabold">
+                       
+                            <div className="absolute -top-2 -right-1 rounded-full text-white bg-orange-500 p-1 flex items-center justify-center text-xs font-extrabold">
                                 {items.length}
                             </div>
-                        )}
+                     
                     </div>
                     {session ? (
                         <span

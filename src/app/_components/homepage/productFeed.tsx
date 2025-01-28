@@ -4,7 +4,20 @@ import { FiSliders } from "react-icons/fi";
 import Product from "./productCard";
 
 // Define types for Product and Category
+interface ProductType {
+  name: string;
+  price: number;
+  image: string;
+  inStock: boolean;
+  vendor: string;
+  slug: string;
+  category: string;
+}
 
+interface CategoryType {
+  _id: string;
+  name: string;
+}
 
 // Define props type for ProductFeed component
 interface ProductFeedProps {
@@ -62,10 +75,10 @@ function ProductFeed({ products, categories }: ProductFeedProps) {
 
       <div className="grid justify-center grid-flow-row-dense md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 grid-cols-2 mx-auto px-2 gap-x-3 gap-y-5 grid-auto-rows-auto">
         {(categoryActive === "all" ? products : filteredProducts)?.map(
-          ({ _id, name, price, image, inStock, vendor }) => (
+          ({ name, price, image, inStock, vendor, slug }, index) => (
             <Product
-              key={`product-${_id}`}
-              _id={_id}
+              key={`product-${index}`}
+           slug={slug}
               name={name}
               inStock={inStock}
               price={price}

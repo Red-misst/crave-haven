@@ -4,6 +4,7 @@ export interface ProductType {
     image: string;
     inStock: boolean;
     vendor: string;
+    slug:string;
     category: string;
   }
   

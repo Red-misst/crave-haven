@@ -2,25 +2,41 @@ import Banner from "@/app/_components/homepage/banner";
 import JoinCommunity from "@/app/_components/homepage/communityInvite";
 import FeaturesSection from "@/app/_components/homepage/features";
 import ProductFeed from "@/app/_components/homepage/productFeed";
-import { fetchFoods } from "@/requests/getfoods";
 import { Suspense } from "react";
-import LoadingSkeleton from "@/components/ui/loading-skeleton";
-import ErrorBoundary from "@/components/error-boundary";
+import LoadingSkeleton from "@/app/_components/layout/loading-skeleton";
+import ProductErrorDisplay from "@/app/_components/homepage/productErrorDisplay";
+import ErrorBoundary from "@/app/_components/boundaries/errorBoundary";
 import { ProductType, CategoryType } from "@/types/homepage";
-import { FoodType } from "@/types/food"
-
+import { FoodType } from "@/types/food";
+import { connectToDatabase } from "@/lib/mongoDb";
 // Constants
 const DEFAULT_VENDOR = "Food-e Vendor";
 
 export default async function HomePage() {
+
+
+
   try {
-    const { foods, error } = await fetchFoods();
+    const { db } = await connectToDatabase();
 
-    if (error) {
-      throw new Error(error);
-    }
+    // Type cast WithId<Document>[] to Food[]
+    const foods = await db
+      .collection('foods')
+      .find({})
+      .toArray()
+      .then((result) =>
+        result.map((item) => ({
+          name: item.name,
+          price: item.price,
+          slug: item.slug,
+          image: item.image,
+          category: item.category,
+          inStock: item.inStock
+        })) as any
+      );
 
-    // Memoize transformations
+
+    // Transform data
     const products = transformFoodsToProducts(foods);
     const categories = generateUniqueCategories(products);
 
@@ -29,13 +45,9 @@ export default async function HomePage() {
         <Banner />
         <FeaturesSection />
         <JoinCommunity />
-        
         <ErrorBoundary fallback={<ProductErrorDisplay />}>
           <Suspense fallback={<LoadingSkeleton />}>
-            <ProductFeed 
-              products={products} 
-              categories={categories} 
-            />
+            <ProductFeed products={products} categories={categories} />
           </Suspense>
         </ErrorBoundary>
       </main>
@@ -52,10 +64,11 @@ export default async function HomePage() {
   }
 }
 
-// Helper functions
+// Helper Functions
 function transformFoodsToProducts(foods: FoodType[]): ProductType[] {
   return foods.map((food) => ({
     name: food.name,
+    slug:food.slug,
     price: food.price,
     image: food.image,
     inStock: food.inStock || true,
@@ -66,7 +79,7 @@ function transformFoodsToProducts(foods: FoodType[]): ProductType[] {
 
 function generateUniqueCategories(products: ProductType[]): CategoryType[] {
   const categoryMap = new Map<string, CategoryType>();
-  
+
   products.forEach((product, index) => {
     if (!categoryMap.has(product.category)) {
       categoryMap.set(product.category, {
@@ -77,30 +90,4 @@ function generateUniqueCategories(products: ProductType[]): CategoryType[] {
   });
 
   return Array.from(categoryMap.values());
-}
-
-// Error component
-function ProductErrorDisplay({ error }: { error?: unknown }) {
-  const errorMessage = error instanceof Error ? error.message : 'Failed to load products';
-
-  return (
-    <div 
-      role="alert" 
-      aria-live="polite"
-      className="w-full max-w-7xl px-4 py-8 text-center text-red-500"
-    >
-      <h2 className="text-xl font-semibold">
-        ⚠️ Product Loading Error
-      </h2>
-      <p className="mt-2 text-sm text-gray-500">
-        {errorMessage}
-      </p>
-      <button
-        onClick={() => window.location.reload()}
-        className="mt-4 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-      >
-        Retry
-      </button>
-    </div>
-  );
 }

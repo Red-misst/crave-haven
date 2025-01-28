@@ -1,11 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '@/utils/store/store';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "@/utils/store/store";
 
 interface CartItem {
-  id: string;
+  slug: string; // Use slug instead of id
   name: string;
   price: number;
   quantity: number;
+  image: string;
 }
 
 interface CartState {
@@ -17,11 +18,11 @@ const initialState: CartState = {
 };
 
 const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState,
   reducers: {
     addItem(state, action: PayloadAction<CartItem>) {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
+      const existingItem = state.items.find((item) => item.slug === action.payload.slug);
       if (existingItem) {
         existingItem.quantity += action.payload.quantity;
       } else {
@@ -29,12 +30,30 @@ const cartSlice = createSlice({
       }
     },
     removeItem(state, action: PayloadAction<string>) {
-      state.items = state.items.filter(item => item.id !== action.payload);
+      state.items = state.items.filter((item) => item.slug !== action.payload);
     },
-    updateQuantity(state, action: PayloadAction<{ id: string; quantity: number }>) {
-      const item = state.items.find(item => item.id === action.payload.id);
+    incrementItem(state, action: PayloadAction<string>) {
+      const item = state.items.find((item) => item.slug === action.payload);
+      if (item) {
+        item.quantity += 1;
+      }
+    },
+    decrementItem(state, action: PayloadAction<string>) {
+      const item = state.items.find((item) => item.slug === action.payload);
+      if (item) {
+        item.quantity -= 1;
+        if (item.quantity <= 0) {
+          state.items = state.items.filter((cartItem) => cartItem.slug !== action.payload);
+        }
+      }
+    },
+    updateQuantity(state, action: PayloadAction<{ slug: string; quantity: number }>) {
+      const item = state.items.find((item) => item.slug === action.payload.slug);
       if (item) {
         item.quantity = action.payload.quantity;
+        if (item.quantity <= 0) {
+          state.items = state.items.filter((cartItem) => cartItem.slug !== action.payload.slug);
+        }
       }
     },
     clearCart(state) {
@@ -43,6 +62,15 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addItem, removeItem, updateQuantity, clearCart } = cartSlice.actions;
+export const {
+  addItem,
+  removeItem,
+  incrementItem,
+  decrementItem,
+  updateQuantity,
+  clearCart,
+} = cartSlice.actions;
+
 export const selectItems = (state: RootState) => state.cart.items;
+
 export default cartSlice.reducer;
