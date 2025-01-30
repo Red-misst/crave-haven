@@ -3,7 +3,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectItems, removeItem, incrementItem, decrementItem } from "@/utils/cartslice";
 import { useRouter } from "next/navigation";
-import { FiTrash } from "react-icons/fi"; // Import the delete icon from React Icons
+
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -25,14 +25,48 @@ const CartPage = () => {
     dispatch(decrementItem(slug)); // Dispatch action to decrement item quantity
   };
 
-  // Handle checkout action (redirect to checkout page)
-  const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      alert("Your cart is empty!");
-      return;
+// Handle checkout action (redirect to checkout page)
+const handleCheckout = async () => {
+
+  
+  // Check if the cart is empty
+  if (cartItems.length === 0) {
+    alert("Your cart is empty!");
+    return;
+  }
+
+  try {
+    // Create the data to send to the API (cart and any other necessary data)
+    const cartData = {
+      items: cartItems,
+      totalPrice: cartItems.reduce((total, item) => total + item.price * item.quantity, 0), // Calculate total price
+    };
+
+    // Make the API call to save the cart
+    const response = await fetch('/api/createCart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(cartData),
+    });
+
+    // Handle the response from the API
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Cart saved successfully:", data);
+      // Navigate to the checkout page
+      router.push("/checkout");
+    } else {
+      const errorData = await response.json();
+      console.error("Error saving cart:", errorData);
+      alert("Failed to save cart. Please try again.");
     }
-    router.push("/checkout"); // Navigate to the checkout page
-  };
+  } catch (error) {
+    console.error("API call failed:", error);
+    alert("An error occurred. Please try again.");
+  }
+};
 
   // Calculate the total price of all cart items
   const calculateTotal = () => {
